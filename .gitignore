@@ -1,0 +1,112 @@
+# =========================
+# OS-generated files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =========================
+# IDE / Editor files
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+.nbproject/
+
+# =========================
+# Build outputs
+# =========================
+build/
+dist/
+out/
+bin/
+target/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.jar
+*.war
+
+# =========================
+# Python artifacts
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+*.whl
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# =========================
+# Virtual environments
+# =========================
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# =========================
+# Java / Gradle / Maven
+# =========================
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+gradle/
+!gradle/wrapper/
+
+# =========================
+# Node.js (if tooling used)
+# =========================
+node_modules/
+package-lock.json
+yarn.lock
+
+# =========================
+# Logs and temp files
+# =========================
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.pid
+
+# =========================
+# Caches
+# =========================
+.cache/
+*.cache
+
+# =========================
+# Coverage and profiling
+# =========================
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.gcov
+*.gcda
+*.gcno
