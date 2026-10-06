@@ -830,7 +830,7 @@ Source Program -> Lexer -> Parser -> AST -> Semantic Analysis -> TAC -> Basic Bl
 
 4.18 Test and Verification Results
 
-A rigorous verification approach guarantees that unsafe or unproven values remain unquantized.
+The verification suite confirms that unsafe or unproven values in the tested cases remain unquantized.
 
 | Test Category | Evidence | Result |
 |---|---|---|
