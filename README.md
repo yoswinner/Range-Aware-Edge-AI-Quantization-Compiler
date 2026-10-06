@@ -6,133 +6,144 @@
 
 ## Overview
 
-This is a Compiler Design course project implementing a small compiler pipeline that uses **SSA-based static analysis**, **range analysis**, and **integrality analysis** to determine whether numerical computations can safely be represented using INT8.
+This is a compiler pipeline that uses **SSA-based static analysis**, **range analysis**, and **integrality analysis** to determine whether numerical computations can safely be represented using INT8 without loss of precision or overflow.
 
-The compiler takes a small numerical C-like language as input, builds an intermediate representation in Static Single Assignment (SSA) form, performs conservative static analysis on value ranges and integrality, and selectively transforms only those computations for which INT8 safety can be statically proven. Values whose safety cannot be proven remain in FP32.
+The compiler takes a small numerical C-like language as input, builds an intermediate representation in Static Single Assignment (SSA) form, performs conservative static analysis on value ranges and integrality, and selectively transforms only those computations for which INT8 safety can be statically proven. Values whose safety cannot be proven remain unquantized (e.g. in FP32).
 
-## Problem Statement
+## Motivation
 
-> Can a compiler statically determine which numerical computations can be safely represented using INT8 and transform only those computations for which safety can be proven?
+Edge AI deployments often benefit from reduced-precision arithmetic (e.g., INT8) for lower theoretical memory usage and bandwidth. However, aggressive quantization can introduce overflow, underflow, or precision loss. This project implements a compiler-driven approach: rather than relying on runtime profiling or dynamic heuristics, the compiler performs conservative static analysis to identify provably safe quantization opportunities. 
 
-Edge AI deployments often benefit from reduced-precision arithmetic (e.g., INT8) for lower memory usage and faster execution. However, aggressive quantization can introduce overflow, underflow, or precision loss. This project explores a compiler-driven approach: rather than relying on runtime profiling or heuristics, the compiler itself performs conservative static analysis to identify provably safe quantization opportunities.
+## Compiler Pipeline and Components
 
-## Objectives
+The compiler is structured as a complete end-to-end pipeline:
 
-1. **Build a small numerical C-like compiler front end** — lexer, parser, AST construction, and semantic analysis for a simplified input language supporting numerical computations.
-2. **Generate Three Address Code (TAC) and Control Flow Graph (CFG)** — lower the AST into a standard intermediate representation organized into basic blocks.
-3. **Convert the IR into Static Single Assignment (SSA) form** — apply SSA construction to enable precise data-flow analysis.
-4. **Perform static range and integrality analysis** — propagate value ranges and integrality properties through the SSA IR using conservative abstract interpretation.
-5. **Develop conservative INT8 safety checks** — determine whether each computation's range fits within INT8 bounds and its result is provably integral.
-6. **Transform proven-safe computations to INT8** — selectively quantize only those operations for which safety has been statically established.
-7. **Preserve source-level traceability** — maintain mappings from IR operations back to source locations for diagnostics and evaluation.
+1. **Lexer & Parser:** Reads the source program and constructs an Abstract Syntax Tree (AST).
+2. **Semantic Analysis:** Performs type checking and semantic validation.
+3. **IR Generation (TAC):** Lowers the AST into Three Address Code (TAC).
+4. **CFG Construction:** Groups TAC into basic blocks and builds a Control Flow Graph (CFG).
+5. **SSA Construction:** Converts the CFG into Static Single Assignment (SSA) form, inserting **phi nodes** to track values across control-flow branches. This enables precise, path-sensitive data-flow analysis.
+6. **Range & Integrality Analysis:** Propagates known minimum and maximum bounds for variables, along with integrality properties (whether a value has a fractional part).
+7. **Loop Widening:** To handle loops without analyzing infinitely, the compiler simulates loop iterations statically up to a limit. If values do not converge, it widens their range to `UNKNOWN` to guarantee analysis termination.
+8. **INT8 Safety Check:** Determines whether each computation satisfies the strict INT8 constraints.
+9. **Selective Quantization:** Replaces operations with INT8 equivalents in the SSA IR where proven safe.
+10. **Simulator Backend:** A lightweight, teaching-scale execution mechanism that interprets the quantized IR. *(Note: This is an educational simulator, not an LLVM backend or production hardware backend.)*
 
-## Compiler Pipeline
+## Core Safety Rule
 
-```
-Source Program
-     ↓
-   Lexer
-     ↓
-   Parser
-     ↓
-    AST
-     ↓
-Semantic Analysis
-     ↓
-Three Address Code (TAC)
-     ↓
-Basic Blocks / CFG
-     ↓
-    SSA
-     ↓
-Range + Integrality Analysis
-     ↓
-INT8 Safety Check
-     ↓
-Quantization Transformation
-     ↓
-Quantized SSA IR
-     ↓
-Simulator / Backend
-     ↓
-Diagnostics + Evaluation
-```
+The decision to quantize a value is governed by a strict, conservative safety check. A value should only be lowered to INT8 when the compiler can establish that it is integral and its possible range stays within [-128, 127].
 
-## Core Safety Principle
+Specifically, a value is considered safe for INT8 quantization **only if all** of the following hold:
+1. The value is **proven to be integral** (no fractional component) on all paths.
+2. The value's **range is statically known** through analysis.
+3. The statically known range **fits entirely within** `[-128, 127]`.
+4. Safety is established **conservatively** — if any condition cannot be proven (e.g., an input is bounded by `UNKNOWN`), the value is **not** quantized.
 
-The quantization decision for each value is governed by a conservative safety check:
-
-- **INT8 representable range:** [-128, 127]
-- A value is considered safe for INT8 quantization **only if all** of the following hold:
-  1. The value is **proven to be integral** (no fractional component).
-  2. The value's **range is statically known** through analysis.
-  3. The known range **fits entirely within** [-128, 127].
-  4. Safety is established **conservatively** — if any of the above cannot be proven, the value is **not** quantized.
-- **If safety cannot be proven, the value remains in FP32.** This ensures correctness is never sacrificed for optimization.
+Unsafe, insufficiently proven, non-integral, or UNKNOWN values must remain unquantized to guarantee functional correctness.
 
 ## Project Structure
 
-```
+```text
 Range-Aware-Edge-AI-Quantization-Compiler/
-│
 ├── src/                        # Source code for all compiler stages
-│   ├── lexer/                  # Lexical analysis (tokenization)
-│   ├── parser/                 # Syntax analysis (parsing)
-│   ├── ast/                    # Abstract Syntax Tree representation
-│   ├── semantic/               # Semantic analysis (type checking, validation)
-│   ├── ir/                     # Three Address Code (TAC) generation
-│   ├── cfg/                    # Basic blocks and Control Flow Graph construction
-│   ├── ssa/                    # SSA form construction and utilities
-│   ├── analysis/               # Range analysis and integrality analysis
-│   ├── quantization/           # INT8 safety checking and quantization transformation
-│   ├── backend/                # Lightweight simulator / backend
-│   └── diagnostics/            # Source-level diagnostics and evaluation reporting
-│
-├── tests/                      # Test suites for each compiler stage
-│   ├── lexer/                  # Lexer tests
-│   ├── parser/                 # Parser tests
-│   ├── ssa/                    # SSA construction tests
-│   ├── range_analysis/         # Range and integrality analysis tests
-│   ├── quantization/           # Quantization decision and transformation tests
-│   └── integration/            # End-to-end integration tests
-│
-├── examples/                   # Example input programs for the compiler
-│
-├── docs/                       # Documentation
-│   └── review/                 # Project review presentation and review documents
-│
-├── README.md                   # This file
-├── .gitignore                  # Git ignore rules
-└── LICENSE                     # MIT License
+│   ├── lexer/                  
+│   ├── parser/                 
+│   ├── ast/                    
+│   ├── semantic/               
+│   ├── ir/                     
+│   ├── cfg/                    
+│   ├── ssa/                    
+│   ├── analysis/               
+│   ├── quantization/           
+│   ├── backend/                # Lightweight simulator 
+│   ├── diagnostics/            
+│   └── main.py                 # CLI Entry point
+├── tests/                      # Pytest suites for all stages
+├── examples/                   # Sample .qc programs demonstrating features
+├── docs/                       # Additional documentation
+└── README.md                   # This file
 ```
 
-## Current Status
+## Setup and Requirements
 
-> **This repository currently contains the project structure and documentation only.**
-> Implementation of the compiler stages will be developed incrementally.
+- Python 3.10+
+- `pytest` (for running the test suite)
 
-No compiler stages (lexer, parser, SSA, range analysis, quantization, etc.) have been implemented yet. The repository is set up and ready for development to begin.
+Clone the repository and install testing dependencies (if desired):
 
-## Academic Context
+```bash
+git clone <repository_url>
+cd Range-Aware-Edge-AI-Quantization-Compiler
+pip install pytest
+```
 
-| | |
-|---|---|
-| **Course** | BCSE307L — Compiler Design |
-| **Institution** | Vellore Institute of Technology, Vellore |
-| **Faculty Guide** | Prof. Kanagaraj R |
+## Running the Compiler
 
-### Team
+The compiler is invoked through its CLI interface. You can compile and analyze any `.qc` source file.
 
-| Name | Registration Number |
-|---|---|
-| Yash Pradhan | 24BCE0702 |
-| Anjini Pandey | 24BCE0714 |
-| Ishita Srivastava | 24BDS0234 |
+```bash
+python -m src.main <path_to_file.qc>
+```
 
-## Review Materials
+You can view the output of specific compiler stages using the `--emit` flag. Available stages are: `tokens`, `ast`, `tac`, `cfg`, `ssa`, `ranges`, `quantized`, `diagnostics`, `summary`, or `all`.
 
-The final project review presentation and review document are stored in [`docs/review/`](docs/review/).
+**Example:**
+```bash
+python -m src.main examples/safe_arithmetic.qc --emit summary diagnostics
+```
+
+**Output Snippet:**
+```text
+===== summary =====
+SSA values analysed: 3
+  labelled SAFE:      3
+  rewritten to int8:  3
+  labelled REJECT:    0
+
+===== diagnostics =====
+Line 1, Column 5
+Variable: x.1
+Type: int
+Inferred range: [10, 10]
+Integral: YES
+INT8 Safety: SAFE
+Reason: within INT8 bounds and integral on all paths
+Transformation: int -> int8
+...
+```
+
+To control loop widening (how many ordinary iterations to simulate before assuming `UNKNOWN`), use `--widen-after`:
+```bash
+python -m src.main examples/while_loop.qc --widen-after 5
+```
+
+## Examples
+
+The `examples/` directory contains sample programs that demonstrate the compiler's analysis capabilities:
+
+- `safe_arithmetic.qc`: Basic arithmetic where all values statically fall within `[-128, 127]`. All operations are quantized.
+- `if_else_phi.qc`: Demonstrates SSA phi-node resolution across branches. If both branches produce safe values, the phi-node is quantized.
+- `while_loop.qc`: Demonstrates range expansion in loops and loop widening. Loop iterators that might exceed INT8 bounds are safely rejected.
+- `overflow_rejection.qc`: An arithmetic sequence that clearly exceeds 127. The compiler rejects quantization for the overflowing variables.
+- `non_integral_rejection.qc`: Demonstrates the integrality analysis rejecting variables that contain fractional parts.
+
+## Running the Test Suite
+
+The compiler includes a comprehensive test suite covering the lexer, parser, AST, semantic analysis, IR generation, CFG, SSA, range analysis, quantization logic, and a full integration pipeline.
+
+Run the tests using `pytest`:
+
+```bash
+pytest
+```
+*Current Status:* All 20 tests across the compiler stages are passing.
+
+## Current Limitations and Future Work
+
+- **Backend:** The current backend is a lightweight software simulator intended for teaching and validation. It does not output machine code (e.g., x86, ARM, or LLVM IR) and is not intended to run on physical hardware.
+- **Measured Performance:** Because this project uses a teaching-scale simulator, we do not claim experimentally measured runtime speedups, latency reductions, or energy savings. The INT8 quantization provides *theoretical* storage-width benefits.
+- **Language Features:** The input language currently supports numerical operations and basic control flow. Complex data structures like arrays and structs are not currently supported.
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See `LICENSE` for details.
