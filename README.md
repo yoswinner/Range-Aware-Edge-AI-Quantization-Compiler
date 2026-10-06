@@ -1,18 +1,18 @@
 # Range-Aware Edge AI Quantization Compiler
 
-**SSA-based static analysis compiler for safe FP32-to-INT8 quantization.**
+**SSA-based static analysis compiler for safety-aware INT8 quantization.**
 
 ---
 
 ## Overview
 
-This is a compiler pipeline that uses **SSA-based static analysis**, **range analysis**, and **integrality analysis** to determine whether numerical computations can safely be represented using INT8 without loss of precision or overflow.
+This is a compiler pipeline that uses **SSA-based static analysis**, **range analysis**, and **integrality analysis** to determine whether numerical computations can safely be represented using INT8 based on the currently implemented analysis and supported operations.
 
 The compiler takes a small numerical C-like language as input, builds an intermediate representation in Static Single Assignment (SSA) form, performs conservative static analysis on value ranges and integrality, and selectively transforms only those computations for which INT8 safety can be statically proven. Values whose safety cannot be proven remain unquantized (e.g. in FP32).
 
 ## Motivation
 
-Edge AI deployments often benefit from reduced-precision arithmetic (e.g., INT8) for lower theoretical memory usage and bandwidth. However, aggressive quantization can introduce overflow, underflow, or precision loss. This project implements a compiler-driven approach: rather than relying on runtime profiling or dynamic heuristics, the compiler performs conservative static analysis to identify provably safe quantization opportunities. 
+Edge AI deployments can benefit from reduced-precision arithmetic such as INT8 because narrower representations can reduce storage and memory bandwidth requirements. However, aggressive quantization can introduce issues if bounds are exceeded. This project implements a compiler-driven approach: rather than relying on runtime profiling or dynamic heuristics, the compiler performs conservative static analysis to identify provably safe quantization opportunities under its strictly defined constraints.
 
 ## Compiler Pipeline and Components
 
@@ -24,7 +24,7 @@ The compiler is structured as a complete end-to-end pipeline:
 4. **CFG Construction:** Groups TAC into basic blocks and builds a Control Flow Graph (CFG).
 5. **SSA Construction:** Converts the CFG into Static Single Assignment (SSA) form, inserting **phi nodes** to track values across control-flow branches. This enables precise, path-sensitive data-flow analysis.
 6. **Range & Integrality Analysis:** Propagates known minimum and maximum bounds for variables, along with integrality properties (whether a value has a fractional part).
-7. **Loop Widening:** To handle loops without analyzing infinitely, the compiler simulates loop iterations statically up to a limit. If values do not converge, it widens their range to `UNKNOWN` to guarantee analysis termination.
+7. **Loop Widening:** To handle loops without analyzing infinitely, the compiler simulates loop iterations statically up to a limit. If the analysis does not stabilize within the configured widening threshold, the compiler conservatively widens the affected range to `UNKNOWN`, ensuring that loop analysis terminates.
 8. **INT8 Safety Check:** Determines whether each computation satisfies the strict INT8 constraints.
 9. **Selective Quantization:** Replaces operations with INT8 equivalents in the SSA IR where proven safe.
 10. **Simulator Backend:** A lightweight, teaching-scale execution mechanism that interprets the quantized IR. *(Note: This is an educational simulator, not an LLVM backend or production hardware backend.)*
@@ -39,7 +39,7 @@ Specifically, a value is considered safe for INT8 quantization **only if all** o
 3. The statically known range **fits entirely within** `[-128, 127]`.
 4. Safety is established **conservatively** — if any condition cannot be proven (e.g., an input is bounded by `UNKNOWN`), the value is **not** quantized.
 
-Unsafe, insufficiently proven, non-integral, or UNKNOWN values must remain unquantized to guarantee functional correctness.
+Unsafe, insufficiently proven, non-integral, or UNKNOWN values remain unquantized, preserving the compiler's conservative safety policy within the supported analysis.
 
 ## Project Structure
 
@@ -58,7 +58,7 @@ Range-Aware-Edge-AI-Quantization-Compiler/
 │   ├── backend/                # Lightweight simulator 
 │   ├── diagnostics/            
 │   └── main.py                 # CLI Entry point
-├── tests/                      # Pytest suites for all stages
+├── tests/                      # Unittest suites for all stages
 ├── examples/                   # Sample .qc programs demonstrating features
 ├── docs/                       # Additional documentation
 └── README.md                   # This file
@@ -67,14 +67,12 @@ Range-Aware-Edge-AI-Quantization-Compiler/
 ## Setup and Requirements
 
 - Python 3.10+
-- `pytest` (for running the test suite)
 
-Clone the repository and install testing dependencies (if desired):
+Clone the repository:
 
 ```bash
 git clone <repository_url>
 cd Range-Aware-Edge-AI-Quantization-Compiler
-pip install pytest
 ```
 
 ## Running the Compiler
@@ -131,18 +129,20 @@ The `examples/` directory contains sample programs that demonstrate the compiler
 
 The compiler includes a comprehensive test suite covering the lexer, parser, AST, semantic analysis, IR generation, CFG, SSA, range analysis, quantization logic, and a full integration pipeline.
 
-Run the tests using `pytest`:
+Run the tests using Python's built-in `unittest` framework:
 
 ```bash
-pytest
+python -m unittest discover -s tests -v
 ```
-*Current Status:* All 20 tests across the compiler stages are passing.
+
+
 
 ## Current Limitations and Future Work
 
 - **Backend:** The current backend is a lightweight software simulator intended for teaching and validation. It does not output machine code (e.g., x86, ARM, or LLVM IR) and is not intended to run on physical hardware.
 - **Measured Performance:** Because this project uses a teaching-scale simulator, we do not claim experimentally measured runtime speedups, latency reductions, or energy savings. The INT8 quantization provides *theoretical* storage-width benefits.
 - **Language Features:** The input language currently supports numerical operations and basic control flow. Complex data structures like arrays and structs are not currently supported.
+- **Unsupported Operations:** Any unsupported or unanalyzable operations remain conservatively unquantized.
 
 ## License
 
