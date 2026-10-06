@@ -1,10 +1,10 @@
 # Report Update Notes
 
-The existing `Review_1_plan.pdf` contains language reflecting the project's state prior to actual implementation. Since the implementation is now complete, the report needs to be updated to reflect past tense and actual achieved results.
+The existing `Review_1_plan.pdf` contains language reflecting the project's state prior to actual implementation. Since the 60% implementation milestone has been reached, the report needs to be updated to reflect past tense and actual achieved results.
 
 ## Section 4.10 Quantization Transformation
 - **Current**: States that the transformation "only retypes IR. It is *not* validated by executing the quantized IR (the simulator/backend stage is not implemented yet)."
-- **Update**: The backend simulator `execute_ssa` has been implemented. The quantized IR is actively validated and mathematically proven against the FP32 simulator via integration tests.
+- **Update**: The backend simulator `execute_ssa` has been implemented. The quantized IR is successfully validated through the implemented analysis and simulator/integration tests against the FP32 baseline.
 
 ## Section 4.12 Backend / Execution Model
 - **Current**: Proposes a "lightweight IR-walking simulator" as a future Phase 8 deliverable.
@@ -16,4 +16,4 @@ The existing `Review_1_plan.pdf` contains language reflecting the project's stat
 
 ## Section 4.15 Implementation Strategy
 - **Current**: Roadmap is listed as planned future phases (Phase 1 to 9). 
-- **Update**: Phases 1 through 9 are completely implemented. Update the table to reflect "Completed" status.
+- **Update**: Functional components spanning Phase 1 through 9 are implemented as part of the 60% milestone core. Update the table to reflect their implemented status while explicitly noting current limitations.

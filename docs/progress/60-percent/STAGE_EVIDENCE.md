@@ -17,3 +17,10 @@
 | Simulator | IMPLEMENTED | `src/backend/simulator.py` | `tests/backend/test_simulator.py` | Executes TAC instruction set, accurately wrapping constraints. | No memory simulation; strictly register/stack evaluation for demonstration. |
 
 This milestone represents a coherent compiler core implementation designed to prove static INT8 safety.
+
+
+## Current Limitations
+- **Loop Widening**: Loop widening may conservatively produce UNKNOWN if the range does not stabilize, leading to safe rejection.
+- **Unsupported Operations**: Unsupported operations (such as relational comparisons) are safely rejected by the quantization pass.
+- **Backend Simulator**: The backend is an IR-walking simulator, not hardware code generation.
+- **Performance Evaluation**: Runtime and energy improvements have not been measured.

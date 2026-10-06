@@ -65,12 +65,12 @@ Results:
 ```
 ..........
 ----------------------------------------------------------------------
-Ran 10 tests in 0.005s
+Ran 20 tests in 0.013s
 
 OK
 ```
-- Total tests: 10
-- Passed: 10
+- Total tests: 20
+- Passed: 20
 - Failed: 0
 - Skipped: 0
 - Warnings/Errors: 0
