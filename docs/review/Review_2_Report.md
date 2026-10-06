@@ -2,7 +2,7 @@
 Range-Aware Edge AI Quantization Compiler — Project Review 
 Page 1 
 PROJECT REVIEW DOCUMENT 
-Range-Aware Edge AI Quantization Compiler 
+# Range-Aware Edge AI Quantization Compiler
 A Compiler Design Course Project 
  
 Course: BCSE307L — Compiler Design 
@@ -20,8 +20,11 @@ September 2026
 === PAGE 2 ===
 Range-Aware Edge AI Quantization Compiler — Project Review 
 Page 2 
-1. Problem Statement and Motivation 
-1.1 Background 
+
+## 1. Problem Statement and Motivation
+
+### 1.1 Background
+
 Machine learning inference is increasingly being pushed away from centralized cloud servers and onto 
 resource-constrained edge devices such as microcontrollers, mobile processors, and embedded 
 accelerators. Zhou et al. survey this shift under the term edge intelligence and argue that running inference 
@@ -44,7 +47,9 @@ explored extensively in the machine learning systems literature. This project tr
 idea, replacing FP32 computation with INT8 computation wherever this can be shown to be safe , as a 
 problem to be solved inside a compiler, rather than as a property established empirically for a trained 
 neural network model. 
-1.2 Problem Statement 
+
+### 1.2 Problem Statement
+
 The central question this project addresses is: 
 Can a compiler statically determine, before a program is ever executed, whether a given 
 numerical computation can be safely represented using 8-bit integers, and transform only 
@@ -67,7 +72,9 @@ Range-Aware Edge AI Quantization Compiler — Project Review
 Page 3 
 transform only that subset. Every value for which safety cannot be proven statically is left in its original 
 FP32 representation. 
-1.3 Motivation 
+
+### 1.3 Motivation
+
 The motivation for the project follows a short chain of reasoning: 
 • Edge devices operate under real resource constraints — memory, compute throughput, and energy. 
 • These constraints create a need for compact, efficient numerical representations. 
@@ -80,7 +87,9 @@ reasoning.
 • Only once this reasoning has certified a computation as safe should the compiler perform the 
 precision-reducing transformation. 
 Each of these steps corresponds to a concrete stage in the compiler pipeline proposed in Section 4. 
-1.4 Why a Compiler-Based Solution? 
+
+### 1.4 Why a Compiler-Based Solution?
+
 Framing the safety question as a compiler problem, rather than as a runtime check or a property 
 established empirically by testing a trained model, has concrete advantages. A compiler already constructs 
 an intermediate representation (IR) of the program in  which every value has an explicit definition and a 
@@ -93,7 +102,9 @@ analysis depends only on the numeric semantics of the source language, not on a 
 — so the resulting safety proof is a property of the program rather than of one particular execution. Finally, 
 deciding safety at compile time avoids the overhead of runtime range checks on a device that is already 
 resource constrained. 
-1.5 Relevance to Compiler Design 
+
+### 1.5 Relevance to Compiler Design
+
 The project is deliberately scoped so that its technical content sits inside standard Compiler Design topics 
 rather than inside machine learning: Three Address Code as an intermediate representation, basic -block 
 and control-flow-graph construction, static single assignment form, data -flow analysis, and a machine -
@@ -101,7 +112,9 @@ independent optimization pass that consumes the results of that analysis to perf
 transformation. Edge AI motivates why the optimization is useful; it does not change the technical content 
 of the optimization itself. The project is not an exercise in training or evaluating a neural network, and it 
 does not depend on any deep learning framework. 
-2. Objectives of the Project 
+
+## 2. Objectives of the Project
+
 The project is guided by the following objectives: 
 • Design and formally specify a small C-like numerical language — supporting integer and floating-
 point constants, variable declarations, assignment, arithmetic and relational operators, if/else, 
@@ -131,13 +144,17 @@ representative test programs using well-defined, measured (not assumed) metrics.
 These objectives are scoped to be realistic for a single-semester student project: each depends only on the 
 compiler stage that precedes it, and none requires infrastructure — such as a full LLVM backend, a deep 
 learning framework, or hardware-specific code generation — beyond what is described in Section 4. 
-3. Literature Survey / Related Work 
+
+## 3. Literature Survey / Related Work
+
 This survey draws on original, verifiable sources spanning edge computing, neural network quantization, 
 compiler-based optimization, and static/data -flow analysis, retrieved from conference proceedings, 
 journal archives, and arXiv preprints. It is organized to move from the practical motivation for the project 
 (edge constraints and quantization) toward the theoretical and systems foundations the proposed 
 compiler pipeline is built on (static analysis, SSA, and compiler infrastructure). 
-3.1 Edge AI and Efficient Computation 
+
+### 3.1 Edge AI and Efficient Computation
+
 Edge intelligence — the deployment of AI inference directly on edge devices rather than in centralized data 
 centers — has been surveyed extensively as network and device capabilities have matured. Zhou et al. 
 review the architectures, frameworks, and enabling technologies for running deep learning models at the 
@@ -154,7 +171,9 @@ computation cost, without altering the structure of the program.
 === PAGE 5 ===
 Range-Aware Edge AI Quantization Compiler — Project Review 
 Page 5 
-3.2 Quantization and Reduced-Precision Computation 
+
+### 3.2 Quantization and Reduced-Precision Computation
+
 Quantization, in the machine learning systems literature, generally refers to representing the weights and 
 activations of a neural network using a lower -precision numeric format than the 32 -bit floating -point 
 representation used during training. Jacob et al. describe a quantization scheme and a co-designed training 
@@ -170,7 +189,9 @@ signed 8-bit integers in the range [-128, 127] — but asks a different question
 model tolerates quantization on average, whether an individual computation, considered in isolation, can 
 be proved safe to quantize before the program is ever executed. This reframes quantization as a compiler-
 level, formally checked transformation rather than a model-level, statistically validated one. 
-3.3 Quantization Safety and Numerical Constraints 
+
+### 3.3 Quantization Safety and Numerical Constraints
+
 The quantization literature is well aware that reducing precision is not a simple datatype substitution. 
 Practical INT8 schemes such as those of Jacob et al. and Krishnamoorthi rely on a scale factor, and in some 
 schemes a zero-point, that map a continuous range of real values onto the 256 representable 8-bit integers, 
@@ -184,7 +205,9 @@ on every possible execution path. This is a stricter and more limited guarantee 
 provides — the project does not attempt per -channel scaling, ze ro-point calibration, or accuracy -based 
 tuning, which are explicitly left outside its scope — but it is a guarantee that holds exactly, rather than on 
 average, for every value to which it is applied. 
-3.4 Compiler-Based and Hardware-Aware Optimization 
+
+### 3.4 Compiler-Based and Hardware-Aware Optimization
+
 Several existing compiler systems demonstrate that machine -independent, IR -based analysis and 
 transformation can be extended to numerically and hardware-sensitive optimizations. Lattner and Adve's 
 LLVM defines a low-level, strongly typed intermediate representation held in SSA form specifically so that 
@@ -203,7 +226,9 @@ separating IR construction, analysis, and transformation into distinct, inspecta
 === PAGE 6 ===
 Range-Aware Edge AI Quantization Compiler — Project Review 
 Page 6 
-3.5 Static Analysis, Data-Flow Analysis and Range Analysis 
+
+### 3.5 Static Analysis, Data-Flow Analysis and Range Analysis
+
 The theoretical basis for the proposed range and integrality analysis comes from the abstract interpretation 
 framework introduced by Cousot and Cousot . Their 1976 paper on static determination of dynamic 
 properties of programs introduces interval -based abstraction — representing the possible values of a 
@@ -223,7 +248,9 @@ code. Astrée is a large -scale demonstration that the class of static reasoning
 the range of a variable and using that bound to rule out a specific class of run -time error — is both 
 theoretically sound and practically deployable on embedded software, which is precisely the target domain 
 motivating this project's edge-AI framing. 
-3.6 SSA and Compiler Optimization 
+
+### 3.6 SSA and Compiler Optimization
+
 Static single assignment form was popularized as a practical intermediate representation by Cytron, 
 Ferrante, Rosen, Wegman, and Zadeck, who give an efficient algorithm, based on dominance frontiers, for 
 inserting the phi functions needed to give every var iable definition a single, unambiguous static location. 
@@ -237,7 +264,9 @@ reflects the sam e motivation at industrial scale. The proposed pipeline builds 
 using the classical dominance-frontier construction before running range analysis, so the analysis itself can 
 be described, and implemented, purely in terms of per-instruction transfer functions and a join operation 
 at phi nodes. 
-3.7 Research / Implementation Gap 
+
+### 3.7 Research / Implementation Gap
+
 None of the systems reviewed above targets exactly the problem this project addresses, but it would be 
 inaccurate to claim that no existing work touches on any part of it — quantization systems reason about 
 numerical precision; Astrée and the abstract-interpretation literature reason about static value ranges; and 
@@ -255,7 +284,9 @@ Page 7
 inspectable compiler stages over a small language, with the explicit goal of making the underlying compiler-
 optimization principles easy to study, trace, and defend in a Compiler Design course setting, rather than of 
 matching the scale or coverage of the systems discussed above. 
-3.8 Literature Comparison Table 
+
+### 3.8 Literature Comparison Table
+
 Author(s) / Year Work / System Problem Addressed Key Technique Relevant Concept Difference from 
 Proposed Project 
 Zhou et al., 2019 
@@ -430,7 +461,9 @@ project isolates just the
 precision-safety sub-
 problem 
  
-3.9 Literature Synthesis 
+
+### 3.9 Literature Synthesis
+
 Read together, the literature surveyed above traces a clear path toward the proposed project. Edge 
 intelligence research establishes that on-device inference is constrained by memory, compute, and energy 
 === PAGE 8 ===
@@ -450,12 +483,16 @@ architectural choice. The proposed Range-Aware Edge AI Quantization Compiler com
 SSA, static range and integrality  analysis, and a conservative INT8 safety check — into a single, compact 
 pipeline, built at a scale appropriate for a Compiler Design course project rather than for production 
 deployment, while remaining faithful to the compiler-construction techniques on which it is built. 
-4. Proposed Methodology (Architecture / Design) 
+
+## 4. Proposed Methodology (Architecture / Design)
+
 This section describes the planned compiler pipeline in enough detail to show how each stage will actually 
 be built, how it connects to the stages before and after it, and how the design principles stated in Section 
 1 (conservative safety, guaranteed loop termination, and full source traceability) are enforced concretely 
 at each stage. 
-4.1 Overall System Architecture 
+
+### 4.1 Overall System Architecture
+
 The compiler is organized as a linear pipeline of well -defined stages, shown in Figure 1. Each stage 
 consumes the representation produced by the previous stage and produces a new representation, so that 
 every stage can be implemented, tested, and reasoned about independently. 
@@ -487,7 +524,9 @@ Diagnostics / Evaluation Report, per source location, the range, integrality, an
 === PAGE 10 ===
 Range-Aware Edge AI Quantization Compiler — Project Review 
 Page 10 
-4.2 Frontend Design 
+
+### 4.2 Frontend Design
+
 The frontend of the compiler turns source text into a validated abstract syntax tree without losing track of 
 where each construct came from in the original file. The lexer scans the source character stream and emits 
 a token for each lexeme — identifiers, numeric literals (distinguishing integer from floating-point literals), 
@@ -497,7 +536,9 @@ in Section 2; each AST node stores the source position of the token, or of the f
 expression, from which it was built. Semantic analysis walks the completed AST to check that every variable 
 is declared before use, that operand types are consistent for each operator, and that if, while, and print 
 constructs are well formed. Any semantic error is reported using its recorded line and column. 
-4.3 Intermediate Representation 
+
+### 4.3 Intermediate Representation
+
 Once a program has passed semantic analysis, it is lowered into Three Address Code, in which every 
 instruction computes at most one operator applied to at most two operands, for example: 
 t1 = 10 
@@ -512,7 +553,9 @@ TAC is a convenient intermediate representation for this project because it expo
 value as an explicitly named temporary — exactly the granularity at which range and integrality analysis 
 needs to operate. A source expression such as (a + b) * c cannot be usefully range-analyzed as a single unit, 
 but its TAC decomposition into explicit temporaries can be. 
-4.4 Basic Blocks and CFG 
+
+### 4.4 Basic Blocks and CFG
+
 Basic blocks are formed from the TAC instruction stream using the standard leader -based algorithm: the 
 first instruction, the target of any jump, and the instruction immediately following any jump or conditional 
 jump are each marked as leaders, and each ba sic block consists of a leader together with all instructions 
@@ -528,7 +571,9 @@ Range-Aware Edge AI Quantization Compiler — Project Review
 Page 11 
  
 Figure 2. Basic blocks and control-flow graph for an if/else statement. 
-4.5 SSA Construction 
+
+### 4.5 SSA Construction
+
 SSA construction proceeds in two conceptual steps over the CFG built in the previous stage: first, 
 dominance frontiers are computed for every basic block, following the definition used by Cytron  et al.; 
 second, a phi function is inserted for a variable at every block in the iterated dominance frontier of a block 
@@ -555,7 +600,9 @@ Range-Aware Edge AI Quantization Compiler — Project Review
 Page 12 
 nodes, without needing to reason about which of several possible definitions of a variable is live at a given 
 program point. 
-4.6 Range and Integrality Analysis 
+
+### 4.6 Range and Integrality Analysis
+
 Every SSA value is abstracted, following the interval -analysis tradition established by Cousot and Cousot 
 [5], as a pair consisting of an interval [minimum, maximum] and a boolean integrality flag. Representative 
 transfer rules for the arithmetic operators supported by the mini language are given below. 
@@ -573,7 +620,9 @@ but not, in general, for division. At a control-flow join, realized as a phi nod
 incoming operands are merged conservatively by taking the union of their intervals and the logical AND of 
 their integrality flags, since a value that is only sometimes integral must be treated as non -integral for a 
 safety proof that must hold on every execution path. 
-4.7 Phi Nodes and Data-Flow Propagation 
+
+### 4.7 Phi Nodes and Data-Flow Propagation
+
 Because SSA already localizes the effect of control-flow merging into phi nodes, the propagation rule at a 
 join point is simple to state and implement. Given x1 → [10,10] (integral) and x2 → [20,20] (integral), with 
 x3 = phi(x1, x2), the analysis computes x3 → [10,20] (integral), as shown in Figure 4. This merge is 
@@ -582,7 +631,9 @@ generally undecidable statically — which is consistent with the overall design
 must never claim a tighter range than a program can actually exhibit. 
  
 Figure 4. Range propagation through a phi node and a subsequent addition.  
-4.8 Loop Analysis and Convergence 
+
+### 4.8 Loop Analysis and Convergence
+
 While loops introduce a back edge in the CFG and, correspondingly, a phi node for every loop -carried 
 variable at the loop header, for example: 
 i = 0 
@@ -604,7 +655,9 @@ small, bounded number of ordinary iterations per loop header before either stabi
 falling back cons ervatively to UNKNOWN. In either case, the design principle stated throughout this 
 document is enforced — if a stable, safe bound cannot be established for a loop -carried variable, that 
 variable is simply never proposed for INT8 quantization. 
-4.9 INT8 Safety Rules 
+
+### 4.9 INT8 Safety Rules
+
 A value is judged SAFE for INT8 representation only if all of the following hold: 
 • its range is known (not UNKNOWN); 
 • the minimum of its range is at least -128; 
@@ -628,7 +681,9 @@ Range-Aware Edge AI Quantization Compiler — Project Review
 Page 14 
 happens to be bounded. This is an accepted and expected trade -off in static analysis: soundness is 
 preserved even where precision is not. 
-4.10 Quantization Transformation 
+
+### 4.10 Quantization Transformation
+
 The quantization pass is kept strictly separate from the analysis that decides safety: the analysis only labels 
 values, and the transformation pass only acts on values already labelled SAFE. For example, given 
 t1 = 10.0 
@@ -644,7 +699,9 @@ with an FP32 operand — is left in its original FP32 form. This separation of c
 transform) keeps t he safety analysis independently testable: it can be checked against hand -worked 
 examples without the transformation pass existing yet, and the transformation pass can be checked by 
 verifying that it only ever acts on values already labelled SAFE. 
-4.11 Source-Level Diagnostics 
+
+### 4.11 Source-Level Diagnostics
+
 Because line and column information is attached to every token in the frontend and carried forward 
 through the AST, TAC, and SSA representations, every quantization decision can be reported back to the 
 exact source location responsible for it, for example: 
@@ -659,7 +716,9 @@ can check the compiler's reasoning against the source program rather than having
 and, more practically, it makes the analysis and transformation passes far easier to test and debug during 
 implementation, since an incorrect safety decision can be traced directly back to the line of source code 
 that produced it. 
-4.12 Backend / Execution Model 
+
+### 4.12 Backend / Execution Model
+
 The project does not require a hardware backend, an LLVM backend, or an existing deep-learning runtime. 
 For v1, a lightweight IR-walking simulator is proposed, capable of executing both the original (all-FP32) IR 
 and the quantized IR produced by the transformation pass for the same input program, and comparing the 
@@ -667,7 +726,9 @@ two executions on the values that were actually quantized. This is sufficient to
 properties that matter for this project: that the transformation pass produces IR that still ex ecutes 
 correctly, and that a value labelled SAFE and converted to INT8 produces the same numeric result under 
 simulation as its original FP32 counterpart, for every test input exercised. 
-4.13 Evaluation Strategy 
+
+### 4.13 Evaluation Strategy
+
 The following metrics are proposed to evaluate the completed system once implemented; they are stated 
 here as the planned evaluation strategy, not as results already obtained, since no implementation has yet 
 been carried out: 
@@ -687,7 +748,9 @@ program, to illustrate — without overstating — the potential memory benefit 
 No specific percentage improvement in speed, memory, or accuracy is claimed in advance of 
 measurement; any such figures will be reported only once they have actually been measured against the 
 implemented system. 
-4.14 End-to-End Example 
+
+### 4.14 End-to-End Example
+
 Consider the small program 
 x = 10; 
 if (c) { x = 20; } 
@@ -711,7 +774,9 @@ Reason: within INT8 bounds and integral on all paths
 This single trace exercises every stage of the proposed pipeline — frontend, TAC, CFG, SSA, 
 range/integrality analysis, safety decision, transformation, and diagnostics — on one small but 
 representative program. 
-4.15 Implementation Strategy 
+
+### 4.15 Implementation Strategy
+
 Phase Deliverable 
 Phase 1 Lexer, parser, and AST construction, including source-position tracking. 
 Phase 2 Semantic analysis and TAC generation. 
@@ -733,7 +798,9 @@ no phase requires functionality from a later phase to be tested in isolation. De
 implementation-level design (data structures, exact algorithmic pseudocode) are left out of this document 
 by design, since this is a review document intended to establish the problem, objectives, background, and 
 architecture ahead of implementation, not an implementation manual. 
-5. Expected Outcomes 
+
+## 5. Expected Outcomes
+
 The proposed pipeline is expected to result in a compiler optimization pass that statically verifies, before a 
 program is ever executed, whether an FP32 operation can be safely converted to INT8 — cutting the 
 memory footprint of qualifying values by a factor of four and speeding up computation on edge hardware 
@@ -800,12 +867,11 @@ and A. Krishnamurthy, "TVM: An automated end -to-end optimizing compiler for dee
 Proc. 13th USENIX Symp. on Operating Systems Design and Implementation (OSDI), 2018, pp. 578 –
 594. 
 
-
-4.16 Current Implementation Status and Verification — Review 2
+### 4.16 Current Implementation Status and Verification — Review 2
 
 The Review 2 milestone establishes a working compiler core spanning the front end, intermediate representations, SSA-based analysis, conservative INT8 safety checking, selective quantization, diagnostics, and a lightweight execution model.
 
-4.17 Implemented Compiler Stages
+### 4.17 Implemented Compiler Stages
 
 The current teaching-scale prototype successfully processes source code through the following pipeline:
 Source Program -> Lexer -> Parser -> AST -> Semantic Analysis -> TAC -> Basic Blocks / CFG -> SSA -> Range + Integrality Analysis -> INT8 Safety Analysis -> Selective Quantization -> Quantized SSA IR -> Lightweight Simulator / Backend -> Diagnostics / Evaluation.
@@ -828,7 +894,7 @@ Source Program -> Lexer -> Parser -> AST -> Semantic Analysis -> TAC -> Basic Bl
 | Diagnostics | IMPLEMENTED | diagnostic outputs with source locations |
 | End-to-End Pipeline | IMPLEMENTED FOR CURRENT SCOPE | integration tests and example programs |
 
-4.18 Test and Verification Results
+### 4.18 Test and Verification Results
 
 The verification suite confirms that unsafe or unproven values in the tested cases remain unquantized.
 
@@ -843,9 +909,10 @@ The verification suite confirms that unsafe or unproven values in the tested cas
 | Original vs quantized if/else execution | simulator | [20] = [20] |
 | Original vs quantized loop execution | simulator | [15] = [15] |
 
-4.19 Representative End-to-End Compiler Outputs
+### 4.19 Representative End-to-End Compiler Outputs
 
-1. Safe Arithmetic (examples/safe_arithmetic.qc)
+## 1. Safe Arithmetic (examples/safe_arithmetic.qc)
+
 Source: `int x = 10; int y = 20; int z = x + y; print z;`
 Result:
 - x.1 -> [10,10] -> SAFE
@@ -854,7 +921,8 @@ Result:
 3 analysed, 3 safe, 3 rewritten, 0 rejected. 
 Quantized IR: `z.1 : int8 = x.1 + y.1`
 
-2. Overflow Rejection (examples/overflow_rejection.qc)
+## 2. Overflow Rejection (examples/overflow_rejection.qc)
+
 Source: `int x = 100; int y = 30; int z = x + y; print z;`
 Result:
 - x.1 -> [100,100] -> SAFE
@@ -862,7 +930,8 @@ Result:
 - z.1 -> [130,130] -> REJECTED (possible overflow because 130 > 127)
 3 analysed, 2 safe, 2 rewritten, 1 rejected.
 
-3. Non-integral Rejection (examples/non_integral_rejection.qc)
+## 3. Non-integral Rejection (examples/non_integral_rejection.qc)
+
 Source: `float x = 10.0; float y = 3.5; float z = x + y; print z;`
 Result:
 - x.1 -> [10,10] -> integral -> SAFE
@@ -870,22 +939,28 @@ Result:
 - z.1 -> [13.5,13.5] -> non-integral -> REJECTED
 3 analysed, 1 safe, 1 rewritten, 2 rejected.
 
-4. If/Else + SSA Phi (examples/if_else_phi.qc)
+## 4. If/Else + SSA Phi (examples/if_else_phi.qc)
+
 SSA phi node generated: `max.4 = phi(B3: max.3, B4: max.2)`
 Merged range: max.4 -> [10,20] (integral = YES)
 Relational temporary `t1 = x.1 > y.1` is retained/rejected because relational comparison '>' is not supported by the current quantization transformation pass. Original vs Quantized simulator execution yields `[20]` identically.
 
-5. While Loop + Widening (examples/while_loop.qc)
+## 5. While Loop + Widening (examples/while_loop.qc)
+
 Conservative loop widening may produce UNKNOWN when the analysis does not stabilize within the configured widening threshold. Such values are not quantized. Original vs Quantized simulator execution yields `[15]` identically.
 
-4.20 Limitations and Remaining Work
+### 4.20 Limitations and Remaining Work
 
 The implementation is a teaching-scale compiler prototype corresponding to the current project milestone, not a production compiler. 
-1. Loop widening is conservative and can produce UNKNOWN for loop-carried values when the range does not stabilise within the configured widening threshold.
-2. Unsupported operations, such as the relational comparison demonstrated by '>', are not quantized.
-3. The backend is a lightweight IR-walking simulator, not a real hardware backend or LLVM backend.
-4. No empirical runtime, latency, energy, or hardware-power measurements have been performed yet.
 
-4.21 Review 2 Milestone Summary
+## 1. Loop widening is conservative and can produce UNKNOWN for loop-carried values when the range does not stabilise within the configured widening threshold.
+
+## 2. Unsupported operations, such as the relational comparison demonstrated by '>', are not quantized.
+
+## 3. The backend is a lightweight IR-walking simulator, not a real hardware backend or LLVM backend.
+
+## 4. No empirical runtime, latency, energy, or hardware-power measurements have been performed yet.
+
+### 4.21 Review 2 Milestone Summary
 
 The Review 2 milestone establishes a working compiler core. The implemented numeric model evaluates INT8 eligibility utilizing known ranges, bounds checking, integrality, supported operations, and safety violations. Safe integer-valued SSA operations can be lowered to int8 in the current implementation. Unsafe or unproven values remain unquantized.
