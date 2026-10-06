@@ -4,7 +4,7 @@
 |------|--------|--------------|-------|------------------|-------------|
 | Lexer | IMPLEMENTED | `src/lexer/lexer.py`, `src/lexer/tokens.py` | `tests/lexer/test_lexer.py` | Tokenizes integer/float literals, keywords, identifiers. Line/col attached. | Only basic ASCII characters supported. |
 | Parser | IMPLEMENTED | `src/parser/parser.py` | `tests/parser/test_parser.py` | Parses while, if/else, declarations, assignments, binary ops. | Does not support unary operations aside from simple negation. |
-| AST | IMPLEMENTED | `src/ast/nodes.py`, `src/ast/printer.py`, `src/ast/types.py` | `tests/ast/test_ast.py` | Strongly typed nodes storing source locations. | No support for arrays or structs. |
+| AST | IMPLEMENTED | `src/ast/nodes.py`, `src/ast/printer.py`, `src/ast/types.py` | `tests/ast_tests/test_ast.py` | Strongly typed nodes storing source locations. | No support for arrays or structs. |
 | Semantic Analysis | IMPLEMENTED | `src/semantic/analyzer.py`, `src/semantic/symbols.py` | `tests/semantic/test_semantic.py` | Resolves names to symbols, enforces types (int vs float). | Strict scope rules, does not permit shadowing. |
 | TAC | IMPLEMENTED | `src/ir/lowering.py`, `src/ir/tac.py`, `src/ir/values.py` | `tests/ir/test_tac.py` | Flattens expressions to 3-address format using temporaries. | Does not attempt expression re-association. |
 | CFG | IMPLEMENTED | `src/cfg/cfg.py`, `src/cfg/dominators.py` | `tests/cfg/test_cfg.py` | Computes basic blocks, back-edges, post-order traversals. |  |
