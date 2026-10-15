@@ -45,6 +45,7 @@ Unsafe, insufficiently proven, non-integral, or UNKNOWN values remain unquantize
 
 ```text
 Range-Aware-Edge-AI-Quantization-Compiler/
+├── evaluate.py                 # Root-level evaluation entry point
 ├── src/                        # Source code for all compiler stages
 │   ├── lexer/                  
 │   ├── parser/                 

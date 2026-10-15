@@ -3,10 +3,11 @@
     python -m src.main examples/if_else_phi.qc
     python -m src.main examples/while_loop.qc --emit ssa ranges diagnostics
     python -m src.main examples/safe_arithmetic.qc --emit all
+    python -m src.main examples/safe_arithmetic.qc --emit simulate
 
 Stages that can be inspected with ``--emit``: tokens, ast, tac, cfg, ssa,
-ranges, quantized, diagnostics, summary (``all`` selects everything). The
-default is ``diagnostics summary``.
+ranges, quantized, diagnostics, summary, simulate (``all`` selects everything).
+The default is ``diagnostics summary``.
 """
 
 import argparse
@@ -19,7 +20,7 @@ from src.diagnostics.errors import CompilerError
 from src.diagnostics.report import format_report, summarize
 from src.pipeline import CompilationResult, compile_source
 
-STAGES = ["tokens", "ast", "tac", "cfg", "ssa", "ranges", "quantized", "diagnostics", "summary"]
+STAGES = ["tokens", "ast", "tac", "cfg", "ssa", "ranges", "quantized", "diagnostics", "summary", "simulate"]
 
 
 def _format_ranges(res: CompilationResult) -> str:
@@ -61,6 +62,18 @@ def render(res: CompilationResult, stage: str) -> str:
         return format_report(res.diagnostics)
     if stage == "summary":
         return summarize(res.diagnostics)
+    if stage == "simulate":
+        if res.simulation is None:
+            return "Simulation not available."
+        sim = res.simulation
+        lines = [
+            f"Original (unquantized) output: {sim.original_output}",
+            f"Quantized (INT8) output:       {sim.quantized_output}",
+            f"Equivalent:                    {'YES' if sim.is_equivalent else 'NO'}",
+        ]
+        if sim.error:
+            lines.append(f"Simulation note/error:         {sim.error}")
+        return "\n".join(lines)
     raise ValueError(stage)
 
 
@@ -76,6 +89,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--widen-after", type=int, default=DEFAULT_WIDEN_AFTER,
                         help="ordinary loop iterations before widening to UNKNOWN "
                              f"(default {DEFAULT_WIDEN_AFTER})")
+    parser.add_argument("--inputs", nargs="*", type=float, default=None,
+                        help="optional input values for simulation")
     args = parser.parse_args(argv)
 
     try:
@@ -85,8 +100,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"error: cannot read {args.file}: {exc}", file=sys.stderr)
         return 2
 
+    sim_inputs = None
+    if args.inputs is not None:
+        sim_inputs = [int(x) if x.is_integer() else x for x in args.inputs]
+
     try:
-        result = compile_source(source, widen_after=args.widen_after)
+        result = compile_source(source, widen_after=args.widen_after, inputs=sim_inputs)
     except CompilerError as exc:
         print(str(exc), file=sys.stderr)
         return 1
