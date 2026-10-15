@@ -1,0 +1,83 @@
+================================================================================
+RANGE//LAB: REVIEW 3 CLAUDE REFERENCE & EVIDENCE PACKAGE INVENTORY
+================================================================================
+Project: Range-Aware Edge AI Quantization Compiler
+Application: RANGE//LAB — INT8 Quantization Workbench
+Course: BCSE307L — Compiler Design
+Institution: Vellore Institute of Technology, Vellore
+Date Prepared: October 15, 2026 (Final Consistency Audit Completed)
+
+TEAM MEMBERS:
+- Yash Pradhan (24BCE0702)
+- Anjini Pandey (24BCE0714)
+- Ishita Srivastava (24BDS0234)
+
+FACULTY GUIDE:
+- Prof. Kanagaraj R., School of Computer Science and Engineering (SCOPE), VIT Vellore
+
+================================================================================
+PACKAGE CONTENTS & VERIFIED METADATA
+================================================================================
+
+1. PRIMARY DOCUMENTATION FILES:
+   - CLAUDE_REVIEW3_HANDOFF.md
+     Direct instructions, structural mapping, prompt templates, and academic
+     guardrails for Claude to author the complete Review 3 report in VIT format.
+   - Review3_Implementation_Evidence_Pack.docx
+     Formatted Microsoft Word version of the comprehensive evidence brief,
+     complete with architectural details, module inventories, verified test
+     numbers, benchmark metrics, Review 2 continuity, and fact verification matrix.
+   - Review3_Implementation_Evidence_Pack.md
+     Full Markdown source of the implementation evidence pack (Sections A through L).
+   - RANGE_LAB_Screenshot_Catalog.docx
+     High-resolution visual catalog with all 14 project screenshots embedded alongside
+     academic captions, UI callouts, proof points, and report placement guides.
+   - RANGE_LAB_Screenshot_Catalog.md
+     Markdown companion to the visual screenshot catalog.
+   - PACKAGE_INVENTORY.txt
+     This inventory file detailing package contents and verification metadata.
+
+2. VERIFIED APPLICATION SCREENSHOTS (screenshots/ directory):
+   All 14 screenshots are authentic captures from the live RANGE//LAB application
+   (FastAPI backend at src/api/server.py on port 8000 + React/TypeScript frontend on port 5173).
+   - screenshots/01-main-workbench.png (2244 × 1209 px, 277 KB)
+     Full application view showing 3-column workbench, Monaco source editor, and tabs.
+   - screenshots/02-int8-safety.png (2244 × 1209 px, 274 KB)
+     Safety Analysis view showing 3 quantized variables, intervals, and zero errors.
+   - screenshots/03-overflow-rejection.png (2244 × 1209 px, 294 KB)
+     Overflow rejection showing out-of-range interval z.1 = [130, 130] > 127 and red REJECT badge.
+   - screenshots/04-ssa-inspector-z1.png (2244 × 1209 px, 346 KB)
+     SSA Inspector displaying detailed card for z.1 (def: z.1 = x.1 + y.1, range [30, 30], block B1, INT8 safe).
+   - screenshots/05-ssa-inspector-x1.png (2241 × 1199 px, 320 KB)
+     SSA Inspector displaying interactive operand navigation for x.1 (x.1 = 10, range [10, 10]) and downstream uses.
+   - screenshots/06-control-flow-graph.png (2244 × 1209 px, 212 KB)
+     Visual Control-Flow Graph displaying basic blocks (B0-B3), conditional branches, and SSA.
+   - screenshots/07-simulation-equivalence.png (2241 × 1199 px, 212 KB)
+     Dual IR execution engine comparing unquantized vs. quantized TAC with identical outputs ('30').
+   - screenshots/08-loop-narrowing.png (2241 × 1199 px, 200 KB)
+     Widening and narrowing on while loop: widening extrapolates to UNKNOWN, while narrowing contracts counter i.2 to [0, 10] (safe).
+   - screenshots/09-lexer-ast.png (2244 × 1286 px, 207 KB)
+     Front-end stages displaying token stream (23 tokens) and formatted AST tree view with coordinates.
+   - screenshots/10-tac-ssa-phi.png (2244 × 1286 px, 194 KB)
+     Intermediate representation displaying linear TAC and SSA with phi-nodes (max.2 = phi(B1: max.1, B2: max.0)).
+   - screenshots/11-range-analysis.png (2244 × 1286 px, 202 KB)
+     Abstract interpretation table displaying inferred ranges, integrality status, and sweep convergence counter.
+   - screenshots/12-branch-refinement.png (2244 × 1286 px, 232 KB)
+     Refinement across conditional branches showing split interval [10, 10] and dead code detection (y.2 UNREACHABLE).
+   - screenshots/13-quantized-ir-diagnostics.png (2244 × 1286 px, 208 KB)
+     Quantization transformation stage displaying annotated IR and intermediate dependency blocking (d.1 blocked).
+   - screenshots/14-verification-results.png (2244 × 1286 px, 496 KB)
+     Live terminal view running 137 unit tests (OK) and 12 benchmarks (ALL PASS, 100% equivalence).
+
+================================================================================
+VERIFICATION HIGHLIGHTS (GROUND TRUTH AUDIT)
+================================================================================
+- Unit Tests: 137 tests executed via unittest discovery across 17 test modules, 137 passed (0 failures, 0 errors, 0.291s).
+- Evaluation Benchmarks: 12 standardized benchmarks executed via evaluate.py / tests.evaluation, 12 passed (100% simulation equivalence).
+- Safety Invariants: 0 safety violations across 54 SSA variables.
+- Quantization Rate: 32 variables quantized (59.26%), 3 blocked (5.56%), 19 rejected (35.19%).
+- Theoretical Width Reduction: 44.44% ((32 * 24) / (54 * 32)).
+- Backend Server: src/api/server.py and src/api/serializer.py (FastAPI on port 8000).
+- Frontend Build: TypeScript + Vite compiled with 0 errors (web/dist/index.html).
+- Template Notice: Preserves faculty Review 3 jumping structure (Section 2 to Section 4).
+================================================================================
