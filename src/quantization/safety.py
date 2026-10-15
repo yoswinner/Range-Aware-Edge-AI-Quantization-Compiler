@@ -67,16 +67,19 @@ def check_int8_safety(value: AbsVal, op_supported: bool = True,
     kinds = []
     reasons = []
 
-    if value.is_unknown:
+    if value.is_unknown or value.unreachable:
         kinds.append(RejectKind.UNKNOWN_RANGE)
-        reasons.append(f"range unknown, safety cannot be proven ({value.reason})")
+        if value.unreachable:
+            reasons.append("unreachable or infeasible control-flow path")
+        else:
+            reasons.append(f"range unknown, safety cannot be proven ({value.reason})")
     if value.div_zero:
         kinds.append(RejectKind.DIV_BY_ZERO)
         reasons.append("possible division by zero was flagged")
     if not op_supported:
         kinds.append(RejectKind.UNSUPPORTED_OP)
         reasons.append(f"operation not supported by the quantization pass: {op_description}")
-    if not value.is_unknown:
+    if not value.is_unknown and not value.unreachable:
         if value.hi > INT8_MAX or value.lo < INT8_MIN:
             kinds.append(RejectKind.OVERFLOW)
             parts = []

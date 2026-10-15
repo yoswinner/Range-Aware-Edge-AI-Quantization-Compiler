@@ -46,6 +46,8 @@ def compile_source(
     widen_after: int = DEFAULT_WIDEN_AFTER,
     inputs: Optional[List[Any]] = None,
     run_simulation: bool = True,
+    narrow: bool = False,
+    prune_unreachable: bool = False,
 ) -> CompilationResult:
     """Run every compiler stage, including range analysis, quantization, and IR simulation.
 
@@ -58,7 +60,12 @@ def compile_source(
     tac = generate_tac(program)
     cfg = build_cfg(tac)
     ssa = build_ssa(cfg)
-    ranges = analyze_ranges(ssa, widen_after=widen_after)
+    ranges = analyze_ranges(
+        ssa,
+        widen_after=widen_after,
+        narrow=narrow,
+        prune_unreachable=prune_unreachable,
+    )
     quant = quantize(ssa, ranges)
     diags = build_diagnostics(ssa, ranges, quant)
 

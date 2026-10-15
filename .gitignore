@@ -81,7 +81,7 @@ gradle/
 # Node.js (if tooling used)
 # =========================
 node_modules/
-package-lock.json
+# package-lock.json included for reproducible installation
 yarn.lock
 
 # =========================

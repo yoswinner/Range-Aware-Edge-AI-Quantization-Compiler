@@ -29,7 +29,11 @@ def _format_ranges(res: CompilationResult) -> str:
     for _, instr in res.ssa.instructions():
         for v in instr.defs():
             fact = rr.values[v]
-            note = "  (widened)" if v in rr.widened else ""
+            note = ""
+            if v in rr.narrowed:
+                note = "  (narrowed)"
+            elif v in rr.widened:
+                note = "  (widened)"
             lines.append(f"{str(v):<8} {fact.format_range():<14} "
                          f"integral={'yes' if fact.integral else 'no':<3}{note}")
     lines.append(
@@ -89,6 +93,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--widen-after", type=int, default=DEFAULT_WIDEN_AFTER,
                         help="ordinary loop iterations before widening to UNKNOWN "
                              f"(default {DEFAULT_WIDEN_AFTER})")
+    parser.add_argument("--narrow", action="store_true", default=False,
+                        help="run sound narrowing iterations after loop widening")
+    parser.add_argument("--prune-unreachable", action="store_true", default=False,
+                        help="prune proven unreachable control-flow paths during analysis")
     parser.add_argument("--inputs", nargs="*", type=float, default=None,
                         help="optional input values for simulation")
     args = parser.parse_args(argv)
@@ -105,7 +113,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         sim_inputs = [int(x) if x.is_integer() else x for x in args.inputs]
 
     try:
-        result = compile_source(source, widen_after=args.widen_after, inputs=sim_inputs)
+        result = compile_source(
+            source,
+            widen_after=args.widen_after,
+            inputs=sim_inputs,
+            narrow=args.narrow,
+            prune_unreachable=args.prune_unreachable,
+        )
     except CompilerError as exc:
         print(str(exc), file=sys.stderr)
         return 1

@@ -31,6 +31,8 @@ class BenchmarkCase:
     category: str
     source: str
     inputs: Optional[List[Any]] = None
+    narrow: bool = False
+    prune_unreachable: bool = False
 
 
 BENCHMARKS: List[BenchmarkCase] = [
@@ -91,6 +93,47 @@ BENCHMARKS: List[BenchmarkCase] = [
         }
         print sum;
         """,
+        narrow=False,
+    ),
+    BenchmarkCase(
+        name="bounded_loop_counter",
+        category="Bounded Loop Narrowing",
+        source="""
+        int i = 0;
+        while (i < 10) {
+            i = i + 1;
+        }
+        print i;
+        """,
+        narrow=True,
+    ),
+    BenchmarkCase(
+        name="stabilizing_loop",
+        category="Stabilizing Loop",
+        source="""
+        int x = 0;
+        int n = 4;
+        while (n > 0) {
+            x = 1 - x;
+            n = n - 1;
+        }
+        print x;
+        """,
+        narrow=False,
+    ),
+    BenchmarkCase(
+        name="branch_refinement",
+        category="Branch Refinement",
+        source="""
+        int x = 15;
+        int y = 0;
+        if (x >= 10) {
+            y = x - 5;
+        } else {
+            y = x + 5;
+        }
+        print y;
+        """,
     ),
     BenchmarkCase(
         name="intermediate_overflow",
@@ -111,6 +154,16 @@ BENCHMARKS: List[BenchmarkCase] = [
         int max_val = 127;
         print min_val;
         print max_val;
+        """,
+    ),
+    BenchmarkCase(
+        name="unsupported_op_rejection",
+        category="Unsupported Operator",
+        source="""
+        int a = 20;
+        int b = 4;
+        float c = a / b;
+        print c;
         """,
     ),
     BenchmarkCase(
@@ -144,7 +197,12 @@ class BenchmarkReport:
 
 
 def evaluate_case(case: BenchmarkCase) -> BenchmarkReport:
-    result = compile_source(case.source, inputs=case.inputs or [])
+    result = compile_source(
+        case.source,
+        inputs=case.inputs or [],
+        narrow=case.narrow,
+        prune_unreachable=case.prune_unreachable,
+    )
     q = result.quantization
     r = result.ranges
 
@@ -202,7 +260,7 @@ def run_evaluation() -> bool:
         reports.append(report)
 
     # Format evaluation table
-    header = f"{'Benchmark':<24} | {'SSA':<4} | {'Safe':<4} | {'INT8':<4} | {'Block':<5} | {'Reject':<6} | {'Sim Eq':<6} | {'Safety'}"
+    header = f"{'Benchmark':<26} | {'SSA':<4} | {'Safe':<4} | {'INT8':<4} | {'Block':<5} | {'Reject':<6} | {'Sim Eq':<6} | {'Safety'}"
     print(header)
     print("-" * len(header))
 
@@ -228,7 +286,7 @@ def run_evaluation() -> bool:
         status_safety = "PASS (0)" if r.safety_violations == 0 else f"FAIL ({r.safety_violations})"
 
         row = (
-            f"{r.name:<24} | {r.total_ssa:<4} | {r.safe_count:<4} | {r.quantized_count:<4} | "
+            f"{r.name:<26} | {r.total_ssa:<4} | {r.safe_count:<4} | {r.quantized_count:<4} | "
             f"{r.blocked_count:<5} | {r.rejected_count:<6} | {status_sim:<6} | {status_safety}"
         )
         print(row)
@@ -246,6 +304,10 @@ def run_evaluation() -> bool:
     print(f"Variables Labelled REJECT:        {total_rejected_all} ({total_rejected_all / total_ssa_all * 100:.1f}%)")
     print(f"Simulation Equivalence Rate:      {'100.0%' if all_sim_equivalent else 'FAILED'}")
     print(f"Safety Violations (False Pos):    {total_violations_all} (Absolute conservative guarantee)")
+    reduction_pct = (total_quant_all * 0.75 / total_ssa_all * 100) if total_ssa_all else 0
+    print(f"Theoretical Storage Reduction:    {reduction_pct:.1f}% (INT8 8-bit vs FP32 32-bit baseline;")
+    print("                                  static representation width only; does not claim")
+    print("                                  hardware speedup, latency, or energy savings)")
     print("--------------------------------------------------------------------------------")
 
     passed = (total_violations_all == 0) and all_sim_equivalent
