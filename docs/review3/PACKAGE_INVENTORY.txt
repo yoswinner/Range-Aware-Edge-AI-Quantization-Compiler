@@ -5,7 +5,7 @@ Project: Range-Aware Edge AI Quantization Compiler
 Application: RANGE//LAB — INT8 Quantization Workbench
 Course: BCSE307L — Compiler Design
 Institution: Vellore Institute of Technology, Vellore
-Date Prepared: October 15, 2026 (Final Consistency Audit Completed)
+Date Prepared: October 16, 2026 (Final Review 3 Artifact Synchronization Completed)
 
 TEAM MEMBERS:
 - Yash Pradhan (24BCE0702)
@@ -38,45 +38,72 @@ PACKAGE CONTENTS & VERIFIED METADATA
      This inventory file detailing package contents and verification metadata.
 
 2. VERIFIED APPLICATION SCREENSHOTS (screenshots/ directory):
-   All 14 screenshots are authentic captures from the live RANGE//LAB application
-   (FastAPI backend at src/api/server.py on port 8000 + React/TypeScript frontend on port 5173).
-   - screenshots/01-main-workbench.png (2244 × 1209 px, 277 KB)
-     Full application view showing 3-column workbench, Monaco source editor, and tabs.
-   - screenshots/02-int8-safety.png (2244 × 1209 px, 274 KB)
-     Safety Analysis view showing 3 quantized variables, intervals, and zero errors.
-   - screenshots/03-overflow-rejection.png (2244 × 1209 px, 294 KB)
+   All 14 screenshots are verified captures and visual summaries reflecting the live
+   RANGE//LAB application (FastAPI backend at src/api/server.py on port 8000 + React/TypeScript
+   frontend on port 5173). Figures 1-13 are high-resolution captures from the live interactive UI;
+   Figure 14 is a programmatically rendered verification terminal summary composite generated
+   from actual command execution output.
+   - screenshots/01-main-workbench.png (2244 × 1239 px, 184 KB)
+     Full application view showing 3-column workbench, Monaco source editor, compiler controls,
+     and the active Range Analysis stage with inferred interval table and integrality status.
+   - screenshots/02-int8-safety.png (2244 × 1209 px, 268 KB)
+     Dedicated Safety Analysis view showing 3 quantized variables, intervals, and zero errors.
+   - screenshots/03-overflow-rejection.png (2244 × 1209 px, 287 KB)
      Overflow rejection showing out-of-range interval z.1 = [130, 130] > 127 and red REJECT badge.
-   - screenshots/04-ssa-inspector-z1.png (2244 × 1209 px, 346 KB)
+   - screenshots/04-ssa-inspector-z1.png (2244 × 1209 px, 338 KB)
      SSA Inspector displaying detailed card for z.1 (def: z.1 = x.1 + y.1, range [30, 30], block B1, INT8 safe).
-   - screenshots/05-ssa-inspector-x1.png (2241 × 1199 px, 320 KB)
+   - screenshots/05-ssa-inspector-x1.png (2241 × 1199 px, 313 KB)
      SSA Inspector displaying interactive operand navigation for x.1 (x.1 = 10, range [10, 10]) and downstream uses.
-   - screenshots/06-control-flow-graph.png (2244 × 1209 px, 212 KB)
-     Visual Control-Flow Graph displaying basic blocks (B0-B3), conditional branches, and SSA.
-   - screenshots/07-simulation-equivalence.png (2241 × 1199 px, 212 KB)
+   - screenshots/06-control-flow-graph.png (2241 × 1199 px, 208 KB)
+     Visual Control-Flow Graph displaying basic blocks with branch-refinement reachability:
+     for if_else_phi.qc (x=10, y=20, x>y false), true-branch block B3 is labeled UNREACHABLE,
+     while false-branch B4 and join block B5 remain reachable.
+   - screenshots/07-simulation-equivalence.png (2241 × 1199 px, 207 KB)
      Dual IR execution engine comparing unquantized vs. quantized TAC with identical outputs ('30').
-   - screenshots/08-loop-narrowing.png (2241 × 1199 px, 200 KB)
+   - screenshots/08-loop-narrowing.png (2241 × 1199 px, 196 KB)
      Widening and narrowing on while loop: widening extrapolates to UNKNOWN, while narrowing contracts counter i.2 to [0, 10] (safe).
-   - screenshots/09-lexer-ast.png (2244 × 1286 px, 207 KB)
+   - screenshots/09-lexer-ast.png (2244 × 1286 px, 202 KB)
      Front-end stages displaying token stream (23 tokens) and formatted AST tree view with coordinates.
-   - screenshots/10-tac-ssa-phi.png (2244 × 1286 px, 194 KB)
+   - screenshots/10-tac-ssa-phi.png (2244 × 1286 px, 189 KB)
      Intermediate representation displaying linear TAC and SSA with phi-nodes (max.2 = phi(B1: max.1, B2: max.0)).
-   - screenshots/11-range-analysis.png (2244 × 1286 px, 202 KB)
+   - screenshots/11-range-analysis.png (2244 × 1286 px, 197 KB)
      Abstract interpretation table displaying inferred ranges, integrality status, and sweep convergence counter.
-   - screenshots/12-branch-refinement.png (2244 × 1286 px, 232 KB)
+   - screenshots/12-branch-refinement.png (2244 × 1286 px, 226 KB)
      Refinement across conditional branches showing split interval [10, 10] and dead code detection (y.2 UNREACHABLE).
-   - screenshots/13-quantized-ir-diagnostics.png (2244 × 1286 px, 208 KB)
+   - screenshots/13-quantized-ir-diagnostics.png (2244 × 1286 px, 203 KB)
      Quantization transformation stage displaying annotated IR and intermediate dependency blocking (d.1 blocked).
-   - screenshots/14-verification-results.png (2244 × 1286 px, 496 KB)
-     Live terminal view running 137 unit tests (OK) and 12 benchmarks (ALL PASS, 100% equivalence).
+   - screenshots/14-verification-results.png (2244 × 1286 px, 280 KB)
+     Programmatically rendered verification terminal summary composite showing 138 passing unit tests (OK in ~0.35s)
+     and 12 reproducible evaluation benchmarks (ALL PASS, 100% simulation equivalence, 0 safety violations observed).
+     Raw command execution output is retained as separate text evidence.
 
 ================================================================================
 VERIFICATION HIGHLIGHTS (GROUND TRUTH AUDIT)
 ================================================================================
-- Unit Tests: 137 tests executed via unittest discovery across 17 test modules, 137 passed (0 failures, 0 errors, 0.291s).
+- Unit Tests: 138 tests executed via unittest discovery across 17 test modules, 138 passed (0 failures, 0 errors, ~0.35s).
+- Verified Module Breakdown:
+  * tests/range_analysis/test_range_analysis.py: 27 tests
+  * tests/analysis/test_branch_refinement.py: 15 tests
+  * tests/backend/test_simulator.py: 11 tests
+  * tests/integration/test_pipeline.py: 10 tests
+  * tests/quantization/test_quantization.py: 10 tests
+  * tests/api/test_api.py: 9 tests (includes new CFG reachability regression test)
+  * tests/quantization/test_safety_edge_cases.py: 9 tests
+  * tests/analysis/test_analysis.py: 8 tests
+  * tests/parser/test_parser.py: 7 tests
+  * tests/ssa/test_ssa.py: 7 tests
+  * tests/analysis/test_loop_narrowing.py: 6 tests
+  * tests/cfg/test_cfg.py: 4 tests
+  * tests/ir/test_tac.py: 4 tests
+  * tests/lexer/test_lexer.py: 4 tests
+  * tests/semantic/test_semantic.py: 4 tests
+  * tests/integration/test_boolean_comparisons.py: 2 tests
+  * tests/ast_tests/test_ast.py: 1 test
+  (Sum = 138 tests)
 - Evaluation Benchmarks: 12 standardized benchmarks executed via evaluate.py / tests.evaluation, 12 passed (100% simulation equivalence).
-- Safety Invariants: 0 safety violations across 54 SSA variables.
+- Safety Invariants: 0 safety violations observed across 54 evaluated SSA variables.
 - Quantization Rate: 32 variables quantized (59.26%), 3 blocked (5.56%), 19 rejected (35.19%).
-- Theoretical Width Reduction: 44.44% ((32 * 24) / (54 * 32)).
+- Theoretical Width Reduction: 44.44% ((32 * 24) / (54 * 32)) static representation width reduction.
 - Backend Server: src/api/server.py and src/api/serializer.py (FastAPI on port 8000).
 - Frontend Build: TypeScript + Vite compiled with 0 errors (web/dist/index.html).
 - Template Notice: Preserves faculty Review 3 jumping structure (Section 2 to Section 4).

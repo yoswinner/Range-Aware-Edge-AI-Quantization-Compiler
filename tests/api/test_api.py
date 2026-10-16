@@ -117,6 +117,35 @@ class TestAPI(unittest.TestCase):
                 data = resp.json()
                 self.assertTrue(data["success"], f"Failed to compile {ex['id']}: {data.get('error')}")
 
+    def test_cfg_reachability_if_else_phi(self):
+        source = """int x = 10;
+int y = 20;
+int max = 0;
+
+if (x > y) {
+    max = x;
+} else {
+    max = y;
+}
+
+print max;
+"""
+        payload = {"source": source}
+        resp = self.client.post("/api/compile", json=payload)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["success"])
+        cfg = data["cfg"]
+        block_reachability = {b["name"]: b["is_unreachable"] for b in cfg["blocks"]}
+        # Condition 10 > 20 is false; true branch B3 is unreachable
+        self.assertTrue(block_reachability.get("B3"), "B3 (true branch) should be unreachable")
+        # False branch and join block B5 remain reachable
+        self.assertFalse(block_reachability.get("B0"), "B0 (entry) should be reachable")
+        self.assertFalse(block_reachability.get("B1"), "B1 (branch header) should be reachable")
+        self.assertFalse(block_reachability.get("B2"), "B2 (false path jump) should be reachable")
+        self.assertFalse(block_reachability.get("B4"), "B4 (false branch) should be reachable")
+        self.assertFalse(block_reachability.get("B5"), "B5 (join block) should be reachable via false branch")
+
 
 if __name__ == "__main__":
     unittest.main()

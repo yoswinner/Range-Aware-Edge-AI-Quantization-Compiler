@@ -122,7 +122,7 @@ Use the following mapping to author each section of the Review 3 report using `R
   - INT8 quantization safety rules and intermediate overflow dependency blocking.
   - Software simulator execution model.
 - **Content (5.2 Testing):**
-  - Unit testing methodology: 137 tests passing (`OK`) with 0 failures in 0.291s.
+  - Unit testing methodology: 138 tests passing (`OK`) with 0 failures in ~0.35s.
   - Reproducible benchmark evaluation suite (`evaluate.py`) running 12 benchmarks.
   - Frontend production build verification (`npm run build`, 0 errors).
 - **Figures to Embed:** **Figure 2** (INT8 Safety), **Figure 7** (Simulator), **Figure 8** (Loop Narrowing), **Figure 9** (Lexer/AST), **Figure 11** (Ranges Table), **Figure 13** (Quantized IR Diff), and **Figure 14** (Terminal Test Suite).
@@ -166,12 +166,12 @@ Claude must embed or reference the 14 verified screenshots exactly according to 
 
 | Figure ID | Target Report Section | Recommended Caption | Dimensions | Source Filename |
 |---|---|---|---|---|
-| **Figure 1** | Section 6 | Figure 1: RANGE//LAB Integrated Compiler Workbench Desktop Interface (`safe_arithmetic.qc`) | 2244 × 1209 px | `artifacts/screenshots/01-main-workbench.png` |
+| **Figure 1** | Section 6 | Figure 1: RANGE//LAB Integrated Compiler Workbench Desktop Interface (Range Analysis View) (`safe_arithmetic.qc`) | 2244 × 1239 px | `artifacts/screenshots/01-main-workbench.png` |
 | **Figure 2** | Section 5.1 | Figure 2: INT8 Safety Inferred Interval vs Signed Boundary Comparison (`safe_arithmetic.qc`) | 2244 × 1209 px | `artifacts/screenshots/02-int8-safety.png` |
 | **Figure 3** | Section 7.2 | Figure 3: Direct Overflow Rejection ($z.1 = [130, 130] > 127$) and Type Preservation (`overflow_rejection.qc`) | 2244 × 1209 px | `artifacts/screenshots/03-overflow-rejection.png` |
 | **Figure 4** | Section 6 | Figure 4: Interactive SSA Variable Inspector Side Drawer Displaying $z.1 = x.1 + y.1$ ($[30, 30]$) | 2244 × 1209 px | `artifacts/screenshots/04-ssa-inspector-z1.png` |
 | **Figure 5** | Section 6 | Figure 5: In-Place Operand Traversal and Def-Use Navigation Updating Drawer to $x.1 = 10$ | 2241 × 1199 px | `artifacts/screenshots/05-ssa-inspector-x1.png` |
-| **Figure 6** | Section 4.1 | Figure 6: Interactive Control-Flow Graph (CFG) Basic Block Visualization (`if_else_phi.qc`) | 2244 × 1209 px | `artifacts/screenshots/06-control-flow-graph.png` |
+| **Figure 6** | Section 4.1 | Figure 6: Interactive Control-Flow Graph (CFG) Basic Block Visualization with Branch Refinement Reachability (`if_else_phi.qc`) | 2241 × 1199 px | `artifacts/screenshots/06-control-flow-graph.png` |
 | **Figure 7** | Section 5.2 | Figure 7: Dual-Engine Simulator Execution and Equivalence Verification (Match '30') | 2241 × 1199 px | `artifacts/screenshots/07-simulation-equivalence.png` |
 | **Figure 8** | Section 5.1 | Figure 8: Bounded Loop Interval Convergence under Sound Iterative Narrowing ($[0, 10]$) | 2241 × 1199 px | `artifacts/screenshots/08-loop-narrowing.png` |
 | **Figure 9** | Section 5.1 | Figure 9: Lexer Token Stream Count (23 tokens) and Hierarchical Abstract Syntax Tree (AST) View | 2244 × 1286 px | `artifacts/screenshots/09-lexer-ast.png` |
@@ -179,23 +179,23 @@ Claude must embed or reference the 14 verified screenshots exactly according to 
 | **Figure 11** | Section 5.1 | Figure 11: Static Range Analysis Table with Integrality Flags and Fixed-Point Convergence | 2244 × 1286 px | `artifacts/screenshots/11-range-analysis.png` |
 | **Figure 12** | Section 7.3 | Figure 12: Path-Sensitive Branch Refinement and Static Unreachable Path Detection (`branch_refine.qc`) | 2244 × 1286 px | `artifacts/screenshots/12-branch-refinement.png` |
 | **Figure 13** | Section 5.1 | Figure 13: Side-by-Side Quantized IR Diff and Intermediate Overflow Dependency Blocking | 2244 × 1286 px | `artifacts/screenshots/13-quantized-ir-diagnostics.png` |
-| **Figure 14** | Section 5.2 | Figure 14: Automated Unit Test Suite (137 Tests OK) and Reproducible Benchmark Terminal Console | 2244 × 1286 px | `artifacts/screenshots/14-verification-results.png` |
+| **Figure 14** | Section 5.2 | Figure 14: Automated Unit Test Suite (138 Tests OK) and Reproducible Benchmark Terminal Summary | 2244 × 1286 px | `artifacts/screenshots/14-verification-results.png` |
 
 ---
 
 ## 6. Exact Verified Test and Benchmark Metrics for Inclusion
 
 When reporting empirical results in Section 5.2 and Section 7, cite these exact figures:
-- **Unit Test Total:** **137 tests** executed, **137 passed (100%)**, 0 failures, 0 errors, run time: **0.291s**.
-- **Verified Module Breakdown (17 Test Modules, Sum = 137 Tests):**
+- **Unit Test Total:** **138 tests** executed, **138 passed (100%)**, 0 failures, 0 errors, run time: **~0.35s**.
+- **Verified Module Breakdown (17 Test Modules, Sum = 138 Tests):**
   - `tests/range_analysis/test_range_analysis.py`: 27 tests
   - `tests/analysis/test_branch_refinement.py`: 15 tests
   - `tests/backend/test_simulator.py`: 11 tests
-  - `tests/quantization/test_quantization.py`: 10 tests
   - `tests/integration/test_pipeline.py`: 10 tests
+  - `tests/quantization/test_quantization.py`: 10 tests
+  - `tests/api/test_api.py`: 9 tests (includes new CFG reachability regression test `test_cfg_reachability_if_else_phi`)
   - `tests/quantization/test_safety_edge_cases.py`: 9 tests
   - `tests/analysis/test_analysis.py`: 8 tests
-  - `tests/api/test_api.py`: 8 tests
   - `tests/parser/test_parser.py`: 7 tests
   - `tests/ssa/test_ssa.py`: 7 tests
   - `tests/analysis/test_loop_narrowing.py`: 6 tests
@@ -205,7 +205,7 @@ When reporting empirical results in Section 5.2 and Section 7, cite these exact 
   - `tests/semantic/test_semantic.py`: 4 tests
   - `tests/integration/test_boolean_comparisons.py`: 2 tests
   - `tests/ast_tests/test_ast.py`: 1 test
-  *(Exact check: 27 + 15 + 11 + 10 + 10 + 9 + 8 + 8 + 7 + 7 + 6 + 4 + 4 + 4 + 4 + 2 + 1 = 137 tests)*
+  *(Exact check: 27 + 15 + 11 + 10 + 10 + 9 + 9 + 8 + 7 + 7 + 6 + 4 + 4 + 4 + 4 + 2 + 1 = 138 tests)*
 - **Evaluated Benchmark Programs:** **12 programs** (`safe_arithmetic`, `overflow_rejection`, `non_integral_rejection`, `if_else_phi`, `while_loop_widening`, `bounded_loop_counter`, `stabilizing_loop`, `branch_refinement`, `intermediate_overflow`, `boundary_fit_exact`, `unsupported_op_rejection`, `edge_linear_transform`).
 - **Total Analyzed SSA Variables:** **54 variables**.
 - **Quantization Classification:**
@@ -257,7 +257,7 @@ Before concluding report generation, verify:
 - [ ] Section numbering strictly follows $1 \rightarrow 2 \rightarrow 4 \rightarrow 5 \rightarrow 6 \rightarrow 7 \rightarrow 8 \rightarrow 9 \rightarrow \text{Appendix A}$.
 - [ ] Section 3 omission is noted without breaking the template numbering.
 - [ ] All 14 figures are referenced and placed in their designated sections with accurate captions.
-- [ ] Exact test metrics (137 tests passing, 0 failures, 12 benchmarks, 54 vars, 0 violations) are cited.
+- [ ] Exact test metrics (138 tests passing, 0 failures, 12 benchmarks, 54 vars, 0 violations) are cited.
 - [ ] Theoretical storage reduction ($44.44\%$) is clearly derived and distinguished from hardware speedups.
 - [ ] All 12 literature references [1]–[12] are integrated into the text and listed in Section 9.
 - [ ] The academic tone is formal, rigorous, and appropriate for an upper-level undergraduate Compiler Design capstone.

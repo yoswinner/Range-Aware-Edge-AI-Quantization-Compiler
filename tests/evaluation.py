@@ -303,7 +303,7 @@ def run_evaluation() -> bool:
     print(f"Variables Blocked / Kept FP32:    {total_blocked_all}")
     print(f"Variables Labelled REJECT:        {total_rejected_all} ({total_rejected_all / total_ssa_all * 100:.1f}%)")
     print(f"Simulation Equivalence Rate:      {'100.0%' if all_sim_equivalent else 'FAILED'}")
-    print(f"Safety Violations (False Pos):    {total_violations_all} (Absolute conservative guarantee)")
+    print(f"Safety Violations (False Pos):    {total_violations_all} (No safety violations observed across these {len(reports)} evaluated benchmarks)")
     reduction_pct = (total_quant_all * 0.75 / total_ssa_all * 100) if total_ssa_all else 0
     print(f"Theoretical Storage Reduction:    {reduction_pct:.1f}% (INT8 8-bit vs FP32 32-bit baseline;")
     print("                                  static representation width only; does not claim")
@@ -312,7 +312,7 @@ def run_evaluation() -> bool:
 
     passed = (total_violations_all == 0) and all_sim_equivalent
     if passed:
-        print(">> EVALUATION RESULT: ALL PASS (Conservative Safety Guarantees Preserved)")
+        print(f">> EVALUATION RESULT: ALL PASS (No safety violations observed across these {len(reports)} evaluated benchmarks)")
     else:
         print(">> EVALUATION RESULT: FAILURE")
     print("================================================================================")

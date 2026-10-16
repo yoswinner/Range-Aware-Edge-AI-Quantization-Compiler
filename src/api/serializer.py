@@ -8,6 +8,7 @@ from fractions import Fraction
 from typing import Any, Dict, List, Optional, Set
 
 from src.analysis.abstract_value import AbsVal
+from src.analysis.refinement import refine_edge
 from src.analysis.range_analysis import RangeResult
 from src.ast import nodes
 from src.ast.types import Type
@@ -118,18 +119,54 @@ def serialize_tac_instr(instr: Instr) -> Dict[str, Any]:
     }
 
 
+def compute_reachable_cfg_blocks(
+    cfg: CFG,
+    ssa: Optional[SSAProgram] = None,
+    ranges: Optional[RangeResult] = None,
+) -> Set[int]:
+    """Compute the set of blocks reachable from entry considering branch conditions."""
+    if cfg.entry is None or cfg.entry not in cfg.blocks:
+        return set(cfg.blocks.keys())
+
+    reachable: Set[int] = {cfg.entry}
+    queue: List[int] = [cfg.entry]
+
+    while queue:
+        curr = queue.pop(0)
+        curr_env = ranges.block_out.get(curr, {}) if ranges else {}
+        clean_env = {k: v for k, v in curr_env.items() if not v.unreachable}
+
+        blk = cfg.blocks.get(curr)
+        last_ins = blk.instrs[-1] if (blk and blk.instrs) else None
+        is_cond = isinstance(last_ins, CondJump)
+
+        for succ in cfg.succs(curr):
+            try:
+                kind = cfg.edge_kind(curr, succ)
+            except KeyError:
+                kind = "fallthrough"
+
+            if is_cond and kind in ("true", "false") and ranges and ssa:
+                edge_env = refine_edge(curr, succ, clean_env, ssa)
+                if any(v.unreachable for v in edge_env.values()):
+                    continue
+
+            if succ not in reachable:
+                reachable.add(succ)
+                queue.append(succ)
+
+    return reachable
+
+
 def serialize_cfg(cfg: CFG, ssa: Optional[SSAProgram] = None, ranges: Optional[RangeResult] = None) -> Dict[str, Any]:
     blocks_data: List[Dict[str, Any]] = []
     back_edges_set = set(cfg.back_edges())
+    reachable_blocks = compute_reachable_cfg_blocks(cfg, ssa, ranges)
 
     for bid in sorted(cfg.blocks.keys()):
         blk = cfg.blocks[bid]
         # Check if block is unreachable
-        is_unreachable = False
-        if ranges and bid in ranges.block_in:
-            env = ranges.block_in[bid]
-            if any(val.unreachable for val in env.values()):
-                is_unreachable = True
+        is_unreachable = (bid not in reachable_blocks)
 
         instrs_data = []
         for ins in blk.instrs:
