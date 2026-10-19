@@ -168,5 +168,62 @@ class TestBranchRefinement(unittest.TestCase):
         self.assertIsNotNone(cond_block)
 
 
+class TestPruneUnreachable(unittest.TestCase):
+    """Regression tests for the optional ``prune_unreachable`` analysis mode.
+
+    Before the fix, an infeasible edge was skipped but the block it led to was
+    analysed with the global facts, so dead code received a reachable interval
+    (y.2 = [20, 20]) and the merge became wider than in the default mode
+    (y.4 = [10, 20]).
+    """
+
+    BRANCH_REFINE = (
+        "int x = 15;\nint y = 0;\n"
+        "if (x >= 10) {\n    y = x - 5;\n} else {\n    y = x + 5;\n}\n"
+        "print y;\n"
+    )
+
+    @staticmethod
+    def _ranges(res):
+        return {str(k): v.format_range() for k, v in res.ranges.values.items()}
+
+    def test_prune_marks_dead_branch_unreachable(self):
+        res = compile_source(self.BRANCH_REFINE, prune_unreachable=True)
+        rng = self._ranges(res)
+        self.assertTrue(res.ranges.converged)
+        self.assertEqual(rng["y.2"], "UNREACHABLE")
+        self.assertEqual(rng["y.3"], "[10, 10]")
+        self.assertEqual(rng["y.4"], "[10, 10]")
+
+    def test_prune_matches_default_decisions_on_branch_example(self):
+        default = compile_source(self.BRANCH_REFINE)
+        pruned = compile_source(self.BRANCH_REFINE, prune_unreachable=True)
+        self.assertEqual(self._ranges(default), self._ranges(pruned))
+        self.assertEqual(
+            sorted(map(str, default.quantization.quantized)),
+            sorted(map(str, pruned.quantization.quantized)),
+        )
+        self.assertEqual(
+            sorted(map(str, default.quantization.blocked)),
+            sorted(map(str, pruned.quantization.blocked)),
+        )
+        self.assertTrue(pruned.simulation.is_equivalent)
+
+    def test_prune_matches_default_on_all_evaluation_benchmarks(self):
+        from tests.evaluation import BENCHMARKS
+
+        for bench in BENCHMARKS:
+            with self.subTest(benchmark=bench.name):
+                default = compile_source(bench.source, narrow=bench.narrow)
+                pruned = compile_source(bench.source, narrow=bench.narrow, prune_unreachable=True)
+                self.assertTrue(pruned.ranges.converged)
+                self.assertEqual(self._ranges(default), self._ranges(pruned))
+                self.assertEqual(
+                    sorted(map(str, default.quantization.quantized)),
+                    sorted(map(str, pruned.quantization.quantized)),
+                )
+                self.assertTrue(pruned.simulation.is_equivalent)
+
+
 if __name__ == "__main__":
     unittest.main()

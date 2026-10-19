@@ -85,7 +85,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ simulation }) => {
               <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-secondary)' }}>
                 Original (Unquantized) Output
               </span>
-              <span className="badge badge-neutral">Baseline 32-bit</span>
+              <span className="badge badge-neutral">Python numeric semantics</span>
             </div>
 
             <div style={{
@@ -127,7 +127,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ simulation }) => {
                 Quantized (INT8) Output
               </span>
               <span className={isMatch ? 'badge badge-lime' : 'badge badge-red'}>
-                Signed 8-bit Clamped
+                INT8 values wrap (two&apos;s complement)
               </span>
             </div>
 

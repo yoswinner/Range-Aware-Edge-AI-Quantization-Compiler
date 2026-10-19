@@ -83,6 +83,10 @@ def analyze_ranges(
 
     converged = False
     sweeps = 0
+    # Blocks with no feasible incoming edge (only populated when prune_unreachable
+    # is enabled). Recomputed on every visit, so a block can become live again if
+    # the facts of its predecessors grow.
+    dead_blocks: Set[int] = set()
 
     while sweeps < max_sweeps:
         sweeps += 1
@@ -98,11 +102,18 @@ def analyze_ranges(
                 preds = ssa.cfg.preds(bid)
                 incoming_envs = []
                 for p in preds:
+                    if prune_unreachable and p in dead_blocks:
+                        continue
                     p_env = block_out.get(p, {})
                     e_env = refine_edge(p, bid, p_env, ssa)
                     if prune_unreachable and any(v.unreachable for v in e_env.values()):
                         continue
                     incoming_envs.append(e_env)
+
+                if prune_unreachable and preds and not incoming_envs:
+                    dead_blocks.add(bid)
+                else:
+                    dead_blocks.discard(bid)
 
                 new_in: Dict[Value, AbsVal] = {}
                 all_vars = set()
@@ -116,6 +127,22 @@ def analyze_ranges(
 
             # 2. Iterate instructions within the block
             curr = dict(block_in[bid])
+
+            if bid in dead_blocks:
+                # Every incoming edge was proven infeasible: nothing defined here can
+                # execute, so its values are unreachable (the same verdict the default
+                # mode reaches by propagating unreachable facts through the block).
+                for ins in blk.instrs:
+                    if not ins.defs():
+                        continue
+                    dest = ins.dest
+                    dead_val = AbsVal.make_unreachable()
+                    curr[dest] = dead_val
+                    if env.get(dest) != dead_val:
+                        env[dest] = dead_val
+                        changed = True
+                block_out[bid] = curr
+                continue
 
             def get_operand_fact(v: Value) -> Optional[AbsVal]:
                 if isinstance(v, Const):
@@ -135,6 +162,8 @@ def analyze_ranges(
                     known = []
                     for pred_b, val in ins.incoming.items():
                         if prune_unreachable:
+                            if pred_b in dead_blocks:
+                                continue
                             e_env = refine_edge(pred_b, bid, block_out.get(pred_b, {}), ssa)
                             if any(v.unreachable for v in e_env.values()):
                                 continue
@@ -193,6 +222,8 @@ def analyze_ranges(
         for _ in range(5):
             narrow_changed = False
             for bid in rpo:
+                if bid in dead_blocks:
+                    continue
                 blk = ssa.cfg.blocks[bid]
                 curr = dict(block_in[bid])
 
