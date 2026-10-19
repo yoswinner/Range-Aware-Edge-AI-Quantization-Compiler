@@ -1,0 +1,165 @@
+diff --git a/src/analysis/range_analysis.py b/src/analysis/range_analysis.py
+index 6f9e999..3197942 100644
+--- a/src/analysis/range_analysis.py
++++ b/src/analysis/range_analysis.py
+@@ -83,6 +83,10 @@ def analyze_ranges(
+ 
+     converged = False
+     sweeps = 0
++    # Blocks with no feasible incoming edge (only populated when prune_unreachable
++    # is enabled). Recomputed on every visit, so a block can become live again if
++    # the facts of its predecessors grow.
++    dead_blocks: Set[int] = set()
+ 
+     while sweeps < max_sweeps:
+         sweeps += 1
+@@ -98,12 +102,19 @@ def analyze_ranges(
+                 preds = ssa.cfg.preds(bid)
+                 incoming_envs = []
+                 for p in preds:
++                    if prune_unreachable and p in dead_blocks:
++                        continue
+                     p_env = block_out.get(p, {})
+                     e_env = refine_edge(p, bid, p_env, ssa)
+                     if prune_unreachable and any(v.unreachable for v in e_env.values()):
+                         continue
+                     incoming_envs.append(e_env)
+ 
++                if prune_unreachable and preds and not incoming_envs:
++                    dead_blocks.add(bid)
++                else:
++                    dead_blocks.discard(bid)
++
+                 new_in: Dict[Value, AbsVal] = {}
+                 all_vars = set()
+                 for e in incoming_envs:
+@@ -117,6 +128,22 @@ def analyze_ranges(
+             # 2. Iterate instructions within the block
+             curr = dict(block_in[bid])
+ 
++            if bid in dead_blocks:
++                # Every incoming edge was proven infeasible: nothing defined here can
++                # execute, so its values are unreachable (the same verdict the default
++                # mode reaches by propagating unreachable facts through the block).
++                for ins in blk.instrs:
++                    if not ins.defs():
++                        continue
++                    dest = ins.dest
++                    dead_val = AbsVal.make_unreachable()
++                    curr[dest] = dead_val
++                    if env.get(dest) != dead_val:
++                        env[dest] = dead_val
++                        changed = True
++                block_out[bid] = curr
++                continue
++
+             def get_operand_fact(v: Value) -> Optional[AbsVal]:
+                 if isinstance(v, Const):
+                     if v.ty == Type.FLOAT:
+@@ -135,6 +162,8 @@ def analyze_ranges(
+                     known = []
+                     for pred_b, val in ins.incoming.items():
+                         if prune_unreachable:
++                            if pred_b in dead_blocks:
++                                continue
+                             e_env = refine_edge(pred_b, bid, block_out.get(pred_b, {}), ssa)
+                             if any(v.unreachable for v in e_env.values()):
+                                 continue
+@@ -193,6 +222,8 @@ def analyze_ranges(
+         for _ in range(5):
+             narrow_changed = False
+             for bid in rpo:
++                if bid in dead_blocks:
++                    continue
+                 blk = ssa.cfg.blocks[bid]
+                 curr = dict(block_in[bid])
+ 
+diff --git a/tests/analysis/test_branch_refinement.py b/tests/analysis/test_branch_refinement.py
+index 2c66ee1..c2dd6d9 100644
+--- a/tests/analysis/test_branch_refinement.py
++++ b/tests/analysis/test_branch_refinement.py
+@@ -168,5 +168,62 @@ class TestBranchRefinement(unittest.TestCase):
+         self.assertIsNotNone(cond_block)
+ 
+ 
++class TestPruneUnreachable(unittest.TestCase):
++    """Regression tests for the optional ``prune_unreachable`` analysis mode.
++
++    Before the fix, an infeasible edge was skipped but the block it led to was
++    analysed with the global facts, so dead code received a reachable interval
++    (y.2 = [20, 20]) and the merge became wider than in the default mode
++    (y.4 = [10, 20]).
++    """
++
++    BRANCH_REFINE = (
++        "int x = 15;\nint y = 0;\n"
++        "if (x >= 10) {\n    y = x - 5;\n} else {\n    y = x + 5;\n}\n"
++        "print y;\n"
++    )
++
++    @staticmethod
++    def _ranges(res):
++        return {str(k): v.format_range() for k, v in res.ranges.values.items()}
++
++    def test_prune_marks_dead_branch_unreachable(self):
++        res = compile_source(self.BRANCH_REFINE, prune_unreachable=True)
++        rng = self._ranges(res)
++        self.assertTrue(res.ranges.converged)
++        self.assertEqual(rng["y.2"], "UNREACHABLE")
++        self.assertEqual(rng["y.3"], "[10, 10]")
++        self.assertEqual(rng["y.4"], "[10, 10]")
++
++    def test_prune_matches_default_decisions_on_branch_example(self):
++        default = compile_source(self.BRANCH_REFINE)
++        pruned = compile_source(self.BRANCH_REFINE, prune_unreachable=True)
++        self.assertEqual(self._ranges(default), self._ranges(pruned))
++        self.assertEqual(
++            sorted(map(str, default.quantization.quantized)),
++            sorted(map(str, pruned.quantization.quantized)),
++        )
++        self.assertEqual(
++            sorted(map(str, default.quantization.blocked)),
++            sorted(map(str, pruned.quantization.blocked)),
++        )
++        self.assertTrue(pruned.simulation.is_equivalent)
++
++    def test_prune_matches_default_on_all_evaluation_benchmarks(self):
++        from tests.evaluation import BENCHMARKS
++
++        for bench in BENCHMARKS:
++            with self.subTest(benchmark=bench.name):
++                default = compile_source(bench.source, narrow=bench.narrow)
++                pruned = compile_source(bench.source, narrow=bench.narrow, prune_unreachable=True)
++                self.assertTrue(pruned.ranges.converged)
++                self.assertEqual(self._ranges(default), self._ranges(pruned))
++                self.assertEqual(
++                    sorted(map(str, default.quantization.quantized)),
++                    sorted(map(str, pruned.quantization.quantized)),
++                )
++                self.assertTrue(pruned.simulation.is_equivalent)
++
++
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/web/src/components/views/SimulatorView.tsx b/web/src/components/views/SimulatorView.tsx
+index b44e11b..4c394ee 100644
+--- a/web/src/components/views/SimulatorView.tsx
++++ b/web/src/components/views/SimulatorView.tsx
+@@ -85,7 +85,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ simulation }) => {
+               <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-secondary)' }}>
+                 Original (Unquantized) Output
+               </span>
+-              <span className="badge badge-neutral">Baseline 32-bit</span>
++              <span className="badge badge-neutral">Python numeric semantics</span>
+             </div>
+ 
+             <div style={{
+@@ -127,7 +127,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ simulation }) => {
+                 Quantized (INT8) Output
+               </span>
+               <span className={isMatch ? 'badge badge-lime' : 'badge badge-red'}>
+-                Signed 8-bit Clamped
++                INT8 values wrap (two&apos;s complement)
+               </span>
+             </div>
+ 
